@@ -1,0 +1,142 @@
+swagger: '2.0'
+info:
+  description: Api Documentation
+  version: '1.0'
+  title: Api Documentation
+  termsOfService: 'urn:tos'
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0'
+host: 'localhost:9090'
+basePath: /sample/api/v1
+tags:
+  - name: sample-controller
+    description: Sample Controller
+schemes:
+  - http
+paths:
+  '/accounts':
+    get:
+      tags:
+        - sample-controller
+      summary: Lists accounts
+      operationId: accountsUsingGET
+      produces:
+        - 'application/json'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AccountResource'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      security:
+        - bank_auth:
+            - 'accounts:list'
+      deprecated: false
+  '/accounts/{accountNumber}':
+    get:
+      tags:
+        - sample-controller
+      summary: Consult account details
+      operationId: accountDetailsUsingGET
+      produces:
+        - 'application/json'
+      parameters:
+        - name: accountNumber
+          in: path
+          description: accountNumber
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/AccountResource'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      security:
+        - bank_auth:
+            - 'accounts:details'
+      deprecated: false
+  '/ping':
+    get:
+      tags:
+        - sample-controller
+      summary: ping
+      operationId: pingUsingGET
+      produces:
+        - 'text/plain'
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      deprecated: false
+  '/whoami':
+    get:
+      tags:
+        - sample-controller
+      summary: Describes who you are
+      operationId: whoamiUsingGET
+      produces:
+        - 'application/json'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Whoami'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      security:
+        - bank_auth: []
+      deprecated: false
+securityDefinitions:
+  bank_auth:
+    type: oauth2
+    authorizationUrl: 'http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/auth'
+    tokenUrl: 'http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/token'
+    flow: accessCode
+    scopes:
+      'accounts:list': Right to list accounts
+      'accounts:details': Right to consult accounts details
+definitions:
+  AccountResource:
+    type: object
+    properties:
+      accountNumber:
+        type: string
+    title: AccountResource
+  Whoami:
+    type: object
+    properties:
+      firstName:
+        type: string
+      lastName:
+        type: string
+      roles:
+        type: array
+        items:
+          type: string
+    title: Whoami
