@@ -1,4 +1,4 @@
-package com.imolczek.lab.resourceservercodegen.config;
+package com.imolczek.lab.resourceservercodegen.security;
 
 import java.util.ArrayList;
 import java.util.Arrays;

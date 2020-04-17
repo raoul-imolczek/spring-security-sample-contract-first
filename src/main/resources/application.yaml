@@ -1,5 +1,11 @@
 security:
   oauth2:
     resourceserver:
+      issuer: http://localhost:8888/auth/realms/master
       jwk:
-        jwk-set-uri: http://127.0.0.1:8888/auth/realms/master/protocol/openid-connect/certs
+        jwk-set-uri: http://localhost:8888/auth/realms/master/protocol/openid-connect/certs
+  oauth2bis:
+    resourceserver:
+      issuer: http://localhost:8888/auth/realms/masterbis
+      jwk:
+        jwk-set-uri: http://localhost:8888/auth/realms/masterbis/protocol/openid-connect/certs        

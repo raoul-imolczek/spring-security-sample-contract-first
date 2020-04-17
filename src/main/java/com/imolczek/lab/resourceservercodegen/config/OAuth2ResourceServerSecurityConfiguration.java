@@ -2,18 +2,28 @@ package com.imolczek.lab.resourceservercodegen.config;
 
 import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.imolczek.lab.resourceservercodegen.security.MyIDPAuthoritiesConverter;
+import com.imolczek.lab.resourceservercodegen.security.TenantJWSKeySelector;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import com.nimbusds.jwt.proc.JWTProcessor;
 
 /**
  * See documentation here: https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/config/annotation/web/builders/HttpSecurity.html#oauth2ResourceServer-org.springframework.security.config.Customizer-
@@ -25,8 +35,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class OAuth2ResourceServerSecurityConfiguration extends WebSecurityConfigurerAdapter {
-
-	@Value("${security.oauth2.resourceserver.jwk.jwk-set-uri}") String jwkSetUri;
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -52,6 +60,15 @@ public class OAuth2ResourceServerSecurityConfiguration extends WebSecurityConfig
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new MyIDPAuthoritiesConverter());
         return jwtAuthenticationConverter;
     }	
+    
+
+    @Bean
+    JWTProcessor jwtProcessor(TenantJWSKeySelector keySelector) {
+        ConfigurableJWTProcessor<SecurityContext> jwtProcessor =
+                new DefaultJWTProcessor();
+        jwtProcessor.setJWTClaimsSetAwareJWSKeySelector(keySelector);
+        return jwtProcessor;
+    }
 
     /**
      * Provision of a JwtDecoder bean that uses the IDP configuration from properties to
@@ -59,8 +76,14 @@ public class OAuth2ResourceServerSecurityConfiguration extends WebSecurityConfig
      * @return A JWTDecoder
      */
 	@Bean
-	JwtDecoder jwtDecoder() {
-		return NimbusJwtDecoder.withJwkSetUri(this.jwkSetUri).build();
+	JwtDecoder jwtDecoder(JWTProcessor processor, OAuth2TokenValidator<Jwt> jwtValidator) {
+
+	    NimbusJwtDecoder decoder = new NimbusJwtDecoder(processor);
+	    OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>
+	            (JwtValidators.createDefault(), jwtValidator);
+	    decoder.setJwtValidator(validator);
+	    return decoder;
+		
 	}
 	
 	@Bean
